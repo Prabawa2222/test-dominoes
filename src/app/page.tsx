@@ -17,7 +17,7 @@ export default function Home() {
   ];
 
   const [dominoCards, setDominoCards] = useState(defaultData);
-  const [removeTotal, setRemoveTotal] = useState<string>("");
+  const [removeInput, setRemoveInput] = useState<string>("");
 
   const countDouble = (cards: DominoCard[]): number => {
     return cards.filter((card) => card[0] === card[1]).length;
@@ -46,16 +46,33 @@ export default function Home() {
   };
 
   const removeDuplicates = (): void => {
-    const seen = new Set();
-    const uniqueCards = dominoCards.filter((card) => {
-      const key = card
-        .slice()
-        .sort((a, b) => a - b)
-        .join(",");
-      return seen.has(key) ? false : seen.add(key);
-    });
+    const inputValue = removeInput.trim();
 
-    setDominoCards(uniqueCards);
+    if (inputValue.includes(",")) {
+      const [first, second] = inputValue
+        .split(",")
+        .map((num) => parseInt(num.trim()));
+
+      if (!isNaN(first) && !isNaN(second)) {
+        setDominoCards(
+          dominoCards.filter((card) => {
+            return !(
+              (card[0] === first && card[1] === second) ||
+              (card[0] === second && card[1] === first)
+            );
+          })
+        );
+      }
+    } else {
+      const total = Number(removeInput);
+      if (total) {
+        setDominoCards(
+          dominoCards.filter((card) => calculateTotal(card) !== total)
+        );
+      }
+    }
+
+    setRemoveInput("");
   };
 
   const flipCards = (): void => {
@@ -65,30 +82,45 @@ export default function Home() {
     setDominoCards(flippedCards);
   };
 
-  const handleRemoveByTotal = (): void => {
-    const total = Number(removeTotal);
-    if (total) {
-      setDominoCards(
-        dominoCards.filter((card) => calculateTotal(card) !== total)
-      );
-      setRemoveTotal("");
+  const handleRemove = (): void => {
+    if (!removeInput.trim()) return;
+
+    if (removeInput.includes(",")) {
+      const [num1Str, num2Str] = removeInput.split(",");
+      const num1 = parseInt(num1Str.trim());
+      const num2 = parseInt(num2Str.trim());
+      if (!isNaN(num1) && !isNaN(num2)) {
+        setDominoCards(
+          dominoCards.filter((card) => {
+            return !(card[0] === num1 && card[1] === num2);
+          })
+        );
+      }
+    } else {
+      const total = parseInt(removeInput.trim());
+      if (!isNaN(total)) {
+        setDominoCards(
+          dominoCards.filter((card) => calculateTotal(card) !== total)
+        );
+      }
     }
+    setRemoveInput("");
   };
 
   const resetData = (): void => {
     setDominoCards(defaultData);
-    setRemoveTotal("");
+    setRemoveInput("");
   };
 
   return (
     <div className="p-5">
       <h1 className="text-4xl font-bold">Dominoes</h1>
       <div className="flex flex-col gap-5">
-        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2">
+        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2 rounded-md">
           <strong>Source</strong>
           <p>{JSON.stringify(defaultData)}</p>
         </div>
-        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2">
+        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2 rounded-md">
           <strong>Double Numbers</strong>
           <p>{countDouble(dominoCards)}</p>
         </div>
@@ -139,15 +171,15 @@ export default function Home() {
       </div>
       <div className="flex flex-col py-2">
         <input
-          type="number"
-          value={removeTotal}
-          onChange={(e) => setRemoveTotal(e.target.value)}
+          type="text"
+          value={removeInput}
+          onChange={(e) => setRemoveInput(e.target.value)}
           className="px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter total to remove"
+          placeholder="Input Number"
         />
       </div>
       <button
-        onClick={handleRemoveByTotal}
+        onClick={handleRemove}
         className="bg-blue-500 text-white p-2 rounded-md border-none"
       >
         Remove
