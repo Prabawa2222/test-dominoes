@@ -46,33 +46,20 @@ export default function Home() {
   };
 
   const removeDuplicates = (): void => {
-    const inputValue = removeInput.trim();
+    const uniqueCards: DominoCard[] = [];
+    const seen = new Set<string>();
 
-    if (inputValue.includes(",")) {
-      const [first, second] = inputValue
-        .split(",")
-        .map((num) => parseInt(num.trim()));
+    dominoCards.forEach((card) => {
+      const sorted = [Math.min(card[0], card[1]), Math.max(card[0], card[1])];
+      const key = sorted.join(",");
 
-      if (!isNaN(first) && !isNaN(second)) {
-        setDominoCards(
-          dominoCards.filter((card) => {
-            return !(
-              (card[0] === first && card[1] === second) ||
-              (card[0] === second && card[1] === first)
-            );
-          })
-        );
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueCards.push(card);
       }
-    } else {
-      const total = Number(removeInput);
-      if (total) {
-        setDominoCards(
-          dominoCards.filter((card) => calculateTotal(card) !== total)
-        );
-      }
-    }
+    });
 
-    setRemoveInput("");
+    setDominoCards(uniqueCards);
   };
 
   const flipCards = (): void => {
