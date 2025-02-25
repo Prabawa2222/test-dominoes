@@ -1,101 +1,157 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+
+type DominoCard = [number, number];
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const defaultData: DominoCard[] = [
+    [6, 1],
+    [4, 3],
+    [5, 1],
+    [3, 4],
+    [1, 1],
+    [3, 4],
+    [1, 2],
+  ];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [dominoCards, setDominoCards] = useState(defaultData);
+  const [removeTotal, setRemoveTotal] = useState<string>("");
+
+  const countDouble = (cards: DominoCard[]): number => {
+    return cards.filter((card) => card[0] === card[1]).length;
+  };
+
+  const calculateTotal = (card: DominoCard): number => {
+    return card[0] + card[1];
+  };
+
+  const sortCards = (direction: "asc" | "desc"): void => {
+    const sortedCards = [...dominoCards].sort((a, b) => {
+      const totalA = calculateTotal(a);
+      const totalB = calculateTotal(b);
+
+      if (totalA !== totalB) {
+        return direction === "asc" ? totalA - totalB : totalB - totalA;
+      }
+
+      const minA = Math.min(a[0], a[1]);
+      const minB = Math.min(b[0], b[1]);
+
+      return direction === "asc" ? minA - minB : minB - minA;
+    });
+
+    setDominoCards(sortedCards);
+  };
+
+  const removeDuplicates = (): void => {
+    const seen = new Set();
+    const uniqueCards = dominoCards.filter((card) => {
+      const key = card
+        .slice()
+        .sort((a, b) => a - b)
+        .join(",");
+      return seen.has(key) ? false : seen.add(key);
+    });
+
+    setDominoCards(uniqueCards);
+  };
+
+  const flipCards = (): void => {
+    const flippedCards = dominoCards.map(
+      (card) => [card[1], card[0]] as DominoCard
+    );
+    setDominoCards(flippedCards);
+  };
+
+  const handleRemoveByTotal = (): void => {
+    const total = Number(removeTotal);
+    if (total) {
+      setDominoCards(
+        dominoCards.filter((card) => calculateTotal(card) !== total)
+      );
+      setRemoveTotal("");
+    }
+  };
+
+  const resetData = (): void => {
+    setDominoCards(defaultData);
+    setRemoveTotal("");
+  };
+
+  return (
+    <div className="p-5">
+      <h1 className="text-4xl font-bold">Dominoes</h1>
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2">
+          <strong>Source</strong>
+          <p>{JSON.stringify(defaultData)}</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div className="flex flex-col justify-between h-20 bg-slate-50 border-2 border-slate-100 p-2">
+          <strong>Double Numbers</strong>
+          <p>{countDouble(dominoCards)}</p>
+        </div>
+      </div>
+      <div className="flex gap-2 py-4">
+        {dominoCards.map((card, index) => (
+          <div
+            key={index}
+            className="border-2 border-gray-800 flex flex-col justify-between p-1 w-fit h-24"
+          >
+            <div>{card[0]}</div>
+            <div className="border-t-2 border-gray-800 my-1" />
+            <div>{card[1]}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => sortCards("asc")}
+          className="bg-blue-500 text-white p-2 rounded-md border-none"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Sort (ASC)
+        </button>
+        <button
+          onClick={() => sortCards("desc")}
+          className="bg-blue-500 text-white p-2 rounded-md border-none"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Sort (DESC)
+        </button>
+        <button
+          onClick={flipCards}
+          className="bg-blue-500 text-white p-2 rounded-md border-none"
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          Flip
+        </button>
+        <button
+          onClick={removeDuplicates}
+          className="bg-blue-500 text-white p-2 rounded-md border-none"
+        >
+          Remove Dup
+        </button>
+        <button
+          onClick={resetData}
+          className="bg-blue-500 text-white p-2 rounded-md border-none"
+        >
+          Reset
+        </button>
+      </div>
+      <div className="flex flex-col py-2">
+        <input
+          type="number"
+          value={removeTotal}
+          onChange={(e) => setRemoveTotal(e.target.value)}
+          className="px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter total to remove"
+        />
+      </div>
+      <button
+        onClick={handleRemoveByTotal}
+        className="bg-blue-500 text-white p-2 rounded-md border-none"
+      >
+        Remove
+      </button>
     </div>
   );
 }
